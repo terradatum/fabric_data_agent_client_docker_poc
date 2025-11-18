@@ -1088,7 +1088,10 @@ class FabricDataAgentClient:
         return sql_queries
 
 
-def main(questions: list, raw_response: bool = False, thread_name = None):
+def main(
+        # questions: list,
+        raw_response: bool = False,
+        thread_name = None):
     """
     Example usage of the Fabric Data Agent Client.
     """
@@ -1116,7 +1119,12 @@ def main(questions: list, raw_response: bool = False, thread_name = None):
         print("🤖 Fabric Data Agent Client - Ready!")
         print("="*60)
         
-        for i, question in enumerate(questions, 1):
+        # for i, question in enumerate(questions, 1):
+
+        while True:
+            question = input("\n ❓What would you like to ask the agent? (Ask quit to exit)")
+            if question.lower()=='quit':
+                    break
             if raw_response == True: #printing (mostly) raw response
                 response = client.get_raw_run_response(question, thread_name=thread_name)
                 print(f"\nConversation in thread '{response['thread']['name']}, thread_id: {response['thread']['id']}':\n" + "-" * 50)
@@ -1133,13 +1141,15 @@ def main(questions: list, raw_response: bool = False, thread_name = None):
                 print(response)
                 print("-" * 50)
             
-            # Wait between requests
-            if i < len(questions):
-                n = 1
-                print(f"\nWaiting {n} seconds before next question...")
-                time.sleep(n)
+        #     # Wait between requests
+        #     if i < len(questions):
+        #         n = 1
+        #         print(f"\nWaiting {n} seconds before next question...")
+        #         time.sleep(n)
         
-        print("\n✅ All examples completed successfully!")
+        # print("\n✅ All examples completed successfully!")
+
+
         
     except KeyboardInterrupt:
         print("\n⏹️ Operation cancelled by user")
@@ -1151,9 +1161,12 @@ if __name__ == "__main__":
     # Example questions
     
     thread_name = "example_threadname"
-    questions = [
-        "What data is available in the lakehouse?",
-        "What table has the most foreign keys?",
-        "What are the column names and types in the main tables?"
-    ]
-    main(questions, raw_response=True, thread_name=thread_name)
+    # questions = [
+    #     "What data is available in the lakehouse?",
+    #     "What table has the most foreign keys?",
+    #     "What are the column names and types in the main tables?"
+    # ]
+    main(
+        # questions,
+        raw_response=True, 
+        thread_name=thread_name)
