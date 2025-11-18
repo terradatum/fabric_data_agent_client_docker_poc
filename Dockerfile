@@ -28,5 +28,8 @@ RUN mkdir -p data_viz/
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 
+# Expose Flask port
+EXPOSE 5000
+
 # Default command
-CMD ["python", "fabric_data_agent_client.py"]
+CMD ["python", "flask_app.py"]

@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fabric Data Agent Client</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .auth-section {
+            display: block;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #fff3cd;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .auth-section.hidden {
+            display: none;
+        }
+
+        .auth-section.authenticated {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        .auth-instructions {
+            margin-top: 15px;
+        }
+
+        .device-code {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .auth-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .auth-link:hover {
+            background: #764ba2;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .response-section {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .response-section.active {
+            display: block;
+        }
+
+        .response-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .response-content {
+            color: #444;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .error {
+            background: #fee;
+            border-left-color: #e74c3c;
+        }
+
+        .error .response-label {
+            color: #e74c3c;
+        }
+
+        .question-display {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #764ba2;
+        }
+
+        .question-display strong {
+            color: #333;
+        }
+
+        .question-text {
+            color: #555;
+            margin-top: 5px;
+        }
+
+        .small-text {
+            font-size: 0.9em;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .question-form {
+            display: none;
+        }
+
+        .question-form.active {
+            display: block;
+        }
+
+        .auth-status {
+            font-size: 0.9em;
+            color: #28a745;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fabric Data Agent Client</h1>
+        <p class="subtitle">Ask questions and get AI-powered insights from your data</p>
+
+        <!-- Authentication Section -->
+        <div class="auth-section" id="authSection">
+            <h3>Authentication Required</h3>
+            <p>Please authenticate to start using the data agent.</p>
+            <button onclick="startAuth()" id="authBtn">Authenticate with Microsoft</button>
+
+            <div class="auth-instructions" id="authInstructions" style="display: none;">
+                <p><strong>Follow these steps to authenticate:</strong></p>
+                <ol>
+                    <li>Click the link below to open the authentication page</li>
+                    <li>Enter the code shown below</li>
+                    <li>Sign in with your Microsoft account</li>
+                    <li>Return to this page after authentication</li>
+                </ol>
+                <div class="device-code" id="deviceCode"></div>
+                <a href="#" id="authLink" class="auth-link" target="_blank">Open Authentication Page</a>
+                <p class="small-text">Waiting for authentication to complete...</p>
+            </div>
+        </div>
+
+        <!-- Question Form (shown after authentication) -->
+        <div class="question-form" id="questionForm">
+            <div class="auth-status" id="authStatus">✓ Authenticated</div>
+
+            <form id="askForm">
+                <div class="form-group">
+                    <label for="threadName">Thread Name (Optional)</label>
+                    <input
+                        type="text"
+                        id="threadName"
+                        name="threadName"
+                        placeholder="Leave empty for a new conversation thread"
+                    >
+                    <p class="small-text">Use the same thread name to continue a previous conversation</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="question">Your Question</label>
+                    <textarea
+                        id="question"
+                        name="question"
+                        placeholder="e.g., What data is available in the lakehouse?"
+                        required
+                    ></textarea>
+                </div>
+
+                <button type="submit" id="submitBtn">Ask Question</button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Processing your question...</p>
+            </div>
+
+            <div class="response-section" id="responseSection">
+                <div class="question-display">
+                    <strong>Question:</strong>
+                    <div class="question-text" id="questionDisplay"></div>
+                </div>
+                <div class="response-label">Response:</div>
+                <div class="response-content" id="responseContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authCheckInterval = null;
+
+        // Check authentication status on page load
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/auth/status');
+                const data = await response.json();
+
+                if (data.authenticated) {
+                    showQuestionForm();
+                    if (authCheckInterval) {
+                        clearInterval(authCheckInterval);
+                        authCheckInterval = null;
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking auth status:', error);
+            }
+        }
+
+        // Start authentication flow
+        async function startAuth() {
+            const authBtn = document.getElementById('authBtn');
+            const authInstructions = document.getElementById('authInstructions');
+
+            authBtn.disabled = true;
+            authBtn.textContent = 'Starting authentication...';
+
+            try {
+                const response = await fetch('/auth/start', {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Show device code instructions
+                    document.getElementById('deviceCode').textContent = data.device_code;
+                    document.getElementById('authLink').href = data.verification_uri;
+                    authInstructions.style.display = 'block';
+                    authBtn.style.display = 'none';
+
+                    // Start polling for authentication completion
+                    authCheckInterval = setInterval(checkAuthStatus, 3000);
+                } else {
+                    alert('Error starting authentication: ' + data.error);
+                    authBtn.disabled = false;
+                    authBtn.textContent = 'Authenticate with Microsoft';
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+                authBtn.disabled = false;
+                authBtn.textContent = 'Authenticate with Microsoft';
+            }
+        }
+
+        // Show the question form after authentication
+        function showQuestionForm() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('questionForm').classList.add('active');
+        }
+
+        // Handle question submission
+        document.getElementById('askForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const question = document.getElementById('question').value.trim();
+            const threadName = document.getElementById('threadName').value.trim() || null;
+            const loading = document.getElementById('loading');
+            const responseSection = document.getElementById('responseSection');
+            const responseContent = document.getElementById('responseContent');
+            const questionDisplay = document.getElementById('questionDisplay');
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (!question) {
+                alert('Please enter a question');
+                return;
+            }
+
+            // Show loading, hide response
+            loading.classList.add('active');
+            responseSection.classList.remove('active', 'error');
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question: question,
+                        thread_name: threadName
+                    }),
+                });
+
+                const data = await response.json();
+
+                // Hide loading
+                loading.classList.remove('active');
+                submitBtn.disabled = false;
+
+                // Show response
+                responseSection.classList.add('active');
+                questionDisplay.textContent = question;
+
+                if (data.success) {
+                    responseContent.textContent = data.response;
+                } else {
+                    responseSection.classList.add('error');
+
+                    if (data.needs_auth) {
+                        responseContent.textContent = 'Authentication expired. Please refresh the page to re-authenticate.';
+                    } else {
+                        responseContent.textContent = `Error: ${data.error}`;
+                    }
+                }
+
+            } catch (error) {
+                loading.classList.remove('active');
+                submitBtn.disabled = false;
+                responseSection.classList.add('active', 'error');
+                questionDisplay.textContent = question;
+                responseContent.textContent = `Error: ${error.message}`;
+            }
+        });
+
+        // Check auth status on page load
+        checkAuthStatus();
+    </script>
+</body>
+</html>
