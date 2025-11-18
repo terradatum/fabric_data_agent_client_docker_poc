@@ -1153,7 +1153,7 @@ if __name__ == "__main__":
     thread_name = "example_threadname"
     questions = [
         "What data is available in the lakehouse?",
-        "Show me the top 5 records from any available table",
+        "What table has the most foreign keys?",
         "What are the column names and types in the main tables?"
     ]
     main(questions, raw_response=True, thread_name=thread_name)

@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  data_agent:
+    image: Dockerfile
+    environment:
+      - TENANT_ID=${TENANT}
+      - DATA_AGENT_URL=${DATA_AGENT}
+    # ports:
+    #   - "${APP_PORT}:80"
+    volumes:
+      - ./data_viz:/app/data_viz
