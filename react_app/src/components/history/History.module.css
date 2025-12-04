@@ -1,0 +1,127 @@
+.historyWrapper {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 200px);
+    /* Account for navbar and padding */
+    flex: 1;
+    width: 100%;
+}
+
+.historyContainer {
+    border: 1px solid var(--helix-gray-300);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    max-height: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.historyList {
+    flex: 1;
+    overflow-y: auto;
+}
+
+
+.historyItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+    margin-bottom: 4px;
+    padding: 4px;
+}
+
+.historyItem:hover {
+    background: var(--helix-gray-50);
+}
+
+.historyItemWrapper {
+    border: none;
+    background: transparent;
+    cursor: default;
+}
+
+.historyItemButton {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.historyItemButton:hover {
+    background: var(--helix-gray-100);
+}
+
+.historyItemButton:active {
+    background: var(--helix-gray-200);
+}
+
+.historyItemContent {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    text-align: left;
+}
+
+.historyItemIcon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.historyItemDetails {
+    flex: 1;
+    min-width: 0;
+}
+
+.historyItemPrompt {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--helix-gray-900);
+    line-height: 1.4;
+    margin-bottom: 4px;
+    word-break: break-word;
+}
+
+.historyItemMeta {
+    font-size: 12px;
+    color: var(--helix-gray-600);
+    line-height: 1.3;
+}
+
+.noResults {
+    text-align: center;
+    padding: 32px 16px;
+}
+
+.noResults p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .historyContainer {
+        margin-bottom: 12px;
+        padding: 12px;
+    }
+
+    .historyItemPrompt {
+        font-size: 13px;
+    }
+
+    .historyItemMeta {
+        font-size: 11px;
+    }
+}

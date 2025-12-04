@@ -1,0 +1,42 @@
+{
+  "name": "lw-ai-demo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@helix/ag-grid": "^6.0.13",
+    "@helix/alert": "^3.1.4",
+    "@helix/dropdown-button": "^2.5.14",
+    "@helix/helix-icon": "^3.10.0",
+    "@helix/navbar": "^4.0.2",
+    "@helix/skeleton-loader": "^1.0.1",
+    "@helix/styles": "^2.7.1",
+    "@helix/theming": "^2.2.1",
+    "@lwt-common/authentication": "^1.5.0",
+    "@types/pdfmake": "^0.2.12",
+    "pdfmake": "^0.2.20",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "react-markdown": "^10.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^5.1.1",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vite": "^7.2.4"
+  }
+}

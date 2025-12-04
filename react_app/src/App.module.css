@@ -1,0 +1,200 @@
+.chatContainer {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    overflow: hidden;
+}
+
+.chatScroll {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.gradientTop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: linear-gradient(var(--helix-gray-50), transparent);
+    pointer-events: none;
+}
+
+.gradientBottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: linear-gradient(transparent, var(--helix-gray-50));
+    pointer-events: none;
+}
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    background: rgba(245, 246, 250, 0.98);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modalContent {
+    position: relative;
+    width: 90vw;
+    height: 80vh;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 24px rgba(0, 0, 0, 0.12);
+    padding: 24px;
+}
+
+.userRow {
+    max-width: 80%;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.botRow {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.fullHeight {
+    height: calc(100dvh - 60px);
+}
+
+.landingPage {
+    min-height: calc(100dvh - 60px);
+}
+
+.shimmerText {
+    font-size: 4em;
+    font-weight: bold;
+    background: linear-gradient(90deg,
+            #4b4b4b 0%,
+            #dfdfdf 50%,
+            #4b4b4b 100%);
+    /* Initial gradient */
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 3s infinite linear;
+    /* Apply the animation */
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+        /* Start position of the gradient */
+    }
+
+    100% {
+        background-position: -200% 0;
+        /* End position of the gradient */
+    }
+}
+
+:global(.unified-nav__nav-icon-action:focus) {
+    outline: solid 2px var(--helix-brand) !important;
+}
+
+:global(.helix-btn.helix-btn--primary) {
+    position: relative;
+    overflow: hidden;
+    background: var(--helix-brand) !important;
+    z-index: 1;
+}
+
+/* shimmer overlay */
+:global(.helix-btn.helix-btn--primary::after) {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 150%;
+    height: 100%;
+    background: linear-gradient(120deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.25) 50%,
+            transparent 100%);
+    transform: skewX(-20deg);
+    opacity: 0;
+    pointer-events: none;
+    /* don't block clicks */
+}
+
+/* activate shimmer animation on hover */
+:global(.helix-btn.helix-btn--primary:hover::after) {
+    opacity: 1;
+    animation: helixShimmer 1.2s linear forwards;
+}
+
+@keyframes helixShimmer {
+    0% {
+        left: -150%;
+    }
+
+    100% {
+        left: 150%;
+    }
+}
+
+/* Sample prompt shimmer effect */
+.samplePrompt {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.samplePrompt::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.2) 20%,
+            rgba(255, 255, 255, 0.5) 50%,
+            rgba(255, 255, 255, 0.2) 80%,
+            transparent 100%);
+    animation: samplePromptShimmer 2s 3 ease-in-out;
+    animation-delay: var(--shimmer-delay, 0s);
+    z-index: 1;
+    pointer-events: none;
+}
+
+@keyframes samplePromptShimmer {
+    0% {
+        left: -100%;
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        left: 100%;
+        opacity: 0;
+    }
+}
