@@ -1135,7 +1135,8 @@ def main(
                 print(json.dumps(response, indent=2, default=str))
                 print("-" * 50)
             else:
-                response = client.ask(question, thread_name=thread_name)
+                # response = client.ask(question, thread_name=thread_name)
+                response = client.get_run_details(question, thread_name=thread_name)
                 print(f"\n💬 Response:")
                 print("-" * 50)
                 print(response)

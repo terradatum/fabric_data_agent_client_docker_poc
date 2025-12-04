@@ -151,6 +151,25 @@
             transform: none;
         }
 
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .button-group button {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        #runDetailsBtn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        #runDetailsBtn:hover {
+            box-shadow: 0 5px 20px rgba(40, 167, 69, 0.4);
+        }
+
         .loading {
             display: none;
             text-align: center;
@@ -245,6 +264,37 @@
             display: block;
         }
 
+        .json-response {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .response-type-label {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .response-type-simple {
+            background: #667eea;
+            color: white;
+        }
+
+        .response-type-detailed {
+            background: #28a745;
+            color: white;
+        }
+
         .auth-status {
             font-size: 0.9em;
             color: #28a745;
@@ -304,7 +354,10 @@
                     ></textarea>
                 </div>
 
-                <button type="submit" id="submitBtn">Ask Question</button>
+                <div class="button-group">
+                    <button type="submit" id="submitBtn">Ask Question</button>
+                    <button type="button" id="runDetailsBtn" onclick="submitRunDetails()">Get Run Details</button>
+                </div>
             </form>
 
             <div class="loading" id="loading">
@@ -431,7 +484,10 @@
                 questionDisplay.textContent = question;
 
                 if (data.success) {
-                    responseContent.textContent = data.response;
+                    responseContent.innerHTML = `
+                        <span class="response-type-label response-type-simple">Simple Response</span>
+                        <div style="margin-top: 10px; white-space: pre-wrap;">${data.response}</div>
+                    `;
                 } else {
                     responseSection.classList.add('error');
 
@@ -450,6 +506,79 @@
                 responseContent.textContent = `Error: ${error.message}`;
             }
         });
+
+        // Handle run details submission
+        async function submitRunDetails() {
+            const question = document.getElementById('question').value.trim();
+            const threadName = document.getElementById('threadName').value.trim() || null;
+            const loading = document.getElementById('loading');
+            const responseSection = document.getElementById('responseSection');
+            const responseContent = document.getElementById('responseContent');
+            const questionDisplay = document.getElementById('questionDisplay');
+            const submitBtn = document.getElementById('submitBtn');
+            const runDetailsBtn = document.getElementById('runDetailsBtn');
+
+            if (!question) {
+                alert('Please enter a question');
+                return;
+            }
+
+            // Show loading, hide response
+            loading.classList.add('active');
+            loading.querySelector('p').textContent = 'Getting detailed run information...';
+            responseSection.classList.remove('active', 'error');
+            submitBtn.disabled = true;
+            runDetailsBtn.disabled = true;
+
+            try {
+                const response = await fetch('/run-details', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question: question,
+                        thread_name: threadName
+                    }),
+                });
+
+                const data = await response.json();
+
+                // Hide loading
+                loading.classList.remove('active');
+                loading.querySelector('p').textContent = 'Processing your question...';
+                submitBtn.disabled = false;
+                runDetailsBtn.disabled = false;
+
+                // Show response
+                responseSection.classList.add('active');
+                questionDisplay.textContent = question;
+
+                if (data.success) {
+                    responseContent.innerHTML = `
+                        <span class="response-type-label response-type-detailed">Detailed Response</span>
+                        <pre class="json-response">${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    responseSection.classList.add('error');
+
+                    if (data.needs_auth) {
+                        responseContent.textContent = 'Authentication expired. Please refresh the page to re-authenticate.';
+                    } else {
+                        responseContent.textContent = `Error: ${data.error}`;
+                    }
+                }
+
+            } catch (error) {
+                loading.classList.remove('active');
+                loading.querySelector('p').textContent = 'Processing your question...';
+                submitBtn.disabled = false;
+                runDetailsBtn.disabled = false;
+                responseSection.classList.add('active', 'error');
+                questionDisplay.textContent = question;
+                responseContent.textContent = `Error: ${error.message}`;
+            }
+        }
 
         // Check auth status on page load
         checkAuthStatus();
