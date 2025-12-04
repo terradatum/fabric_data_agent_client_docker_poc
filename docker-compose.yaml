@@ -12,3 +12,20 @@ services:
       - "5000:5000"
     volumes:
       - ./data_viz:/app/data_viz
+    networks:
+      - app-network
+
+  react_frontend:
+    build:
+      context: ./react_app
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - data_agent
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

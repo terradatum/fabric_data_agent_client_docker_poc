@@ -2,11 +2,33 @@
 import { useState } from "react";
 import { AIContext } from "./context";
 import type { AIContextData, AIProviderProps } from "./types";
-import {
-  clientTransactions,
-  transactionSigningCountResults,
-  topAgentsByTransactions,
-} from "@mock-data";
+
+// API base URL - uses environment variable or defaults to relative path for Docker setup
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+
+// Types for the run-details API response
+interface RunDetailsResponse {
+  success: boolean;
+  question: string;
+  run_status?: string;
+  run_steps?: any;
+  messages?: {
+    data: Array<{
+      role: string;
+      content: Array<{
+        text?: {
+          value: string;
+        };
+      }>;
+    }>;
+  };
+  timestamp?: number;
+  sql_queries?: string[];
+  sql_data_previews?: any[];
+  data_retrieval_query?: string;
+  error?: string;
+  needs_auth?: boolean;
+}
 
 export const AIProvider = ({ children }: AIProviderProps) => {
   const [prompt, setPrompt] = useState("");
@@ -16,6 +38,7 @@ export const AIProvider = ({ children }: AIProviderProps) => {
   >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   // History now tracks conversations as arrays of prompt/response pairs
   const [history, setHistory] = useState<
     Array<{
@@ -40,129 +63,105 @@ export const AIProvider = ({ children }: AIProviderProps) => {
     setHistory(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Function to determine which mock data to return based on prompt content
-  const getMockDataBasedOnPrompt = (inputPrompt: string): string => {
-    const lowerPrompt = inputPrompt.toLowerCase();
-
-    // Check for client transactions query
-    if (
-      lowerPrompt.includes("clients") &&
-      lowerPrompt.includes("transaction") &&
-      lowerPrompt.includes("may")
-    ) {
-      const results = clientTransactions
-        .filter((client) => client.totalTransactions > 1)
-        .sort((a, b) => b.totalTransactions - a.totalTransactions);
-
-      const tableRows = results
-        .map(
-          (client, index) =>
-            `| ${index + 1} | ${client.clientName} | ${
-              client.totalTransactions
-            } |`
-        )
-        .join("\n");
-
-      return `**Query Results: Clients with Multiple Transactions (May 2024-2025)**
-
-Found ${results.length} clients with more than one transaction:
-
-| Rank | Client Name | Total Transactions |
-|------|-------------|-------------------|
-${tableRows}
-
-*Data sorted by transaction count in descending order*`;
+  // Check authentication status
+  const checkAuthStatus = async (): Promise<boolean> => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/status`);
+      const data = await res.json();
+      setIsAuthenticated(data.authenticated);
+      return data.authenticated;
+    } catch (err) {
+      console.error("Failed to check auth status:", err);
+      return false;
     }
-
-    // Check for high-value transactions query
-    if (
-      lowerPrompt.includes("transaction") &&
-      lowerPrompt.includes("october") &&
-      lowerPrompt.includes("2 million")
-    ) {
-      const tableRows = transactionSigningCountResults
-        .map(
-          (transaction, index) =>
-            `| ${index + 1} | ${transaction.clientName} | ${
-              transaction.userName
-            } | ${
-              transaction.transactionId
-            } | $${transaction.purchasePrice.toLocaleString()} | ${
-              transaction.signingCount
-            } |`
-        )
-        .join("\n");
-
-      return `**Query Results: High-Value Transactions (Oct 2024 - Today)**
-
-Found ${transactionSigningCountResults.length} transaction(s) meeting the criteria:
-
-| # | Client Name | User Name | Transaction ID | Purchase Price | Signing Count |
-|---|-------------|-----------|----------------|----------------|---------------|
-${tableRows}
-
-*Filtered: Purchase price ≥ $2,000,000 and signing count ≥ 5*`;
-    }
-
-    // Check for top agents query
-    if (
-      lowerPrompt.includes("agents") &&
-      lowerPrompt.includes("main branch 25.07")
-    ) {
-      const tableRows = topAgentsByTransactions
-        .map(
-          (agent, index) =>
-            `| ${index + 1} | ${agent.officeName} | ${agent.userKey} | ${
-              agent.agentFullName
-            } | ${agent.totalTransactions} |`
-        )
-        .join("\n");
-
-      return `**Query Results: Top 10 Agents from Main Branch 25.07**
-
-| Rank | Office Name | User Key | Agent Full Name | Total Transactions |
-|------|-------------|----------|-----------------|-------------------|
-${tableRows}
-
-*Sorted by total transactions in descending order*`;
-    }
-
-    // Default response for unrecognized queries
-    return `**AI Response**
-
-I received your query: "${inputPrompt}"
-
-This appears to be a custom query that doesn't match our predefined sample data sets. 
-
-**Available sample queries:**
-- Client transaction analysis (May 2024-2025)
-- High-value transactions with signing requirements
-- Top agents from Main Branch 25.07
-
-Please try one of the sample prompts for demo data, or this would connect to your actual AI service in production.`;
   };
 
-  // Submit prompt function with mock data integration
+  // Start authentication flow
+  const startAuth = async (): Promise<{ success: boolean; device_code?: string; verification_uri?: string; error?: string }> => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      return data;
+    } catch (err) {
+      console.error("Failed to start auth:", err);
+      return { success: false, error: String(err) };
+    }
+  };
+
+  // Extract response text from the run-details API response
+  const extractResponseText = (data: RunDetailsResponse): string => {
+    // First, try to get the assistant's message
+    if (data.messages?.data) {
+      const assistantMessages = data.messages.data.filter(msg => msg.role === "assistant");
+      if (assistantMessages.length > 0) {
+        const latestMessage = assistantMessages[assistantMessages.length - 1];
+        if (latestMessage.content?.[0]?.text?.value) {
+          return latestMessage.content[0].text.value;
+        }
+      }
+    }
+
+    // Fallback to SQL data if available
+    if (data.sql_data_previews && data.sql_data_previews.length > 0) {
+      const preview = data.sql_data_previews[0];
+      if (Array.isArray(preview)) {
+        return preview.join("\n");
+      }
+      return String(preview);
+    }
+
+    // If we have SQL queries but no data
+    if (data.sql_queries && data.sql_queries.length > 0) {
+      return `**Query Executed:**\n\`\`\`sql\n${data.sql_queries[0]}\n\`\`\`\n\n*Waiting for data...*`;
+    }
+
+    return "No response received from the data agent.";
+  };
+
+  // Submit prompt function - calls the Flask /run-details endpoint
   const submitPrompt = async (inputPrompt: string) => {
     try {
       setIsLoading(true);
       setError(null);
       setPrompt(inputPrompt);
 
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+      // Call the Flask /run-details endpoint
+      const res = await fetch(`${API_BASE_URL}/run-details`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ question: inputPrompt }),
+      });
 
-      // Get mock response based on prompt content
-      const mockResponse = getMockDataBasedOnPrompt(inputPrompt);
-      console.log("Mock Response:", mockResponse);
-      setResponse(mockResponse);
+      const data: RunDetailsResponse = await res.json();
+
+      if (!res.ok) {
+        if (data.needs_auth) {
+          setIsAuthenticated(false);
+          throw new Error("Authentication required. Please authenticate first.");
+        }
+        throw new Error(data.error || "Failed to get response from server");
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || "Request failed");
+      }
+
+      // Extract the response text from the API response
+      const responseText = extractResponseText(data);
+      console.log("API Response:", data);
+      setResponse(responseText);
 
       // Add to responses array
       setResponses((prev) => [
         ...prev,
         {
           prompt: inputPrompt,
-          response: mockResponse,
+          response: responseText,
           timestamp: new Date(),
         },
       ]);
@@ -177,7 +176,7 @@ Please try one of the sample prompts for demo data, or this would connect to you
               conversation: [
                 {
                   prompt: inputPrompt,
-                  response: mockResponse,
+                  response: responseText,
                   timestamp: new Date(),
                 },
               ],
@@ -188,15 +187,15 @@ Please try one of the sample prompts for demo data, or this would connect to you
           const updated = [...prev];
           updated[updated.length - 1].conversation.push({
             prompt: inputPrompt,
-            response: mockResponse,
+            response: responseText,
             timestamp: new Date(),
           });
           return updated;
         }
       });
-    } catch (error) {
+    } catch (err) {
       const errorMessage =
-        error instanceof Error ? error.message : "An error occurred";
+        err instanceof Error ? err.message : "An error occurred";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -219,6 +218,9 @@ Please try one of the sample prompts for demo data, or this would connect to you
     clearAll,
     deleteHistoryItem,
     submitPrompt,
+    isAuthenticated,
+    checkAuthStatus,
+    startAuth,
   };
 
   return (

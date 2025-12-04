@@ -21,6 +21,9 @@ export interface AIContextData {
   clearAll: () => void;
   deleteHistoryItem: (index: number) => void;
   submitPrompt: (prompt: string) => Promise<void>;
+  isAuthenticated: boolean;
+  checkAuthStatus: () => Promise<boolean>;
+  startAuth: () => Promise<{ success: boolean; device_code?: string; verification_uri?: string; error?: string }>;
 }
 
 export interface AIProviderProps {

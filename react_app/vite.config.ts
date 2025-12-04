@@ -13,4 +13,25 @@ export default defineConfig({
       '@utils': path.resolve(__dirname, './src/utils'),
     },
   },
+  server: {
+    // Proxy API requests to Flask backend during development
+    proxy: {
+      '/auth': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+      '/run-details': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+      '/ask': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+      '/health': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+    },
+  },
 })

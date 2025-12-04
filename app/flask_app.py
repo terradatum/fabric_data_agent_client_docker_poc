@@ -11,6 +11,7 @@ import json
 import time
 import uuid
 from flask import Flask, render_template, request, jsonify, session
+from flask_cors import CORS
 from azure.identity import DeviceCodeCredential
 from openai import OpenAI
 import secrets
@@ -22,6 +23,9 @@ warnings.filterwarnings("ignore", category=DeprecationWarning, message=r".*Assis
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
+
+# Enable CORS for all routes - allows React frontend to communicate with Flask backend
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Global variables
 credential = None
