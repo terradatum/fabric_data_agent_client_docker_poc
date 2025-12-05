@@ -3,12 +3,15 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including Node.js and Yarn
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     git \
     libpq-dev \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g yarn \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
@@ -17,6 +20,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY ./app .
+
+# Copy React app and install dependencies
+COPY ./react_app ./react_app
+WORKDIR /app/react_app
+RUN yarn install
+RUN yarn build
+RUN npm install -g serve
+
+# Return to main app directory
+WORKDIR /app
 
 # Install the package in editable mode. Uncomment for easier local development
 # RUN pip install -e .
@@ -28,8 +41,15 @@ RUN mkdir -p data_viz/
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 
-# Expose Flask port
+# Expose Flask port and React port
 EXPOSE 5000
+EXPOSE 3000
+
+# Create a startup script to run both applications
+RUN echo '#!/bin/bash\n\
+cd /app && python flask_app.py &\n\
+cd /app/react_app && npx serve -s dist -p 3000\n\
+' > /app/start.sh && chmod +x /app/start.sh
 
 # Default command
-CMD ["python", "flask_app.py"]
+CMD ["/bin/bash", "/app/start.sh"]
