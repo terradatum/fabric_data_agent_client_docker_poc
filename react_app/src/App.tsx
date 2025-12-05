@@ -23,7 +23,7 @@ import { SkeletonBox } from "@helix/skeleton-loader";
 import { Alert } from "@helix/alert";
 
 interface ResponseItemProps {
-  item: { prompt: string; response: string; timestamp: Date };
+  item: { prompt: string; response: any; timestamp: Date };
   index: number;
   onGridReady: (params: any, index?: number) => void;
   setExpandedGrid: (grid: { index: number; gridData: any } | null) => void;
@@ -45,14 +45,56 @@ const ResponseItem: React.FC<ResponseItemProps> = ({
   gridApiRefs,
   showExportButtons = true,
 }) => {
-  const gridData = item.response.includes("|")
-    ? convertToAgGridData(item.response)
-    : null;
-  const responseWithoutTable = item.response
+  // Extract the clean response text and grid data from the JSON response
+  let responseText = "";
+  let gridData = null;
+
+  if (typeof item.response === "object" && item.response !== null) {
+    // Extract assistant message from JSON structure
+    if (item.response.messages && item.response.messages.data) {
+      const assistantMessage = item.response.messages.data.find(
+        (msg: any) => msg.role === "assistant"
+      );
+      if (assistantMessage && assistantMessage.content && assistantMessage.content[0]) {
+        responseText = assistantMessage.content[0].text.value;
+      }
+    }
+
+    // Try to create grid data from data_table if available
+    if (item.response.data_table && Array.isArray(item.response.data_table)) {
+      const dataTable = item.response.data_table;
+      if (dataTable.length > 0) {
+        // Create column definitions from the keys of the first row
+        const columnDefs = Object.keys(dataTable[0]).map((key) => ({
+          headerName: key.replace(/["\[\]]/g, '').replace(/_/g, ' '), // Clean up header names and replace underscores with spaces
+          field: key,
+          sortable: true,
+          resizable: true,
+          flex: 1,
+        }));
+
+        gridData = {
+          columnDefs,
+          rowData: dataTable,
+        };
+      }
+    }
+  } else if (typeof item.response === "string") {
+    // Fallback: handle string responses (old format or mock data)
+    responseText = item.response;
+    gridData = item.response.includes("|")
+      ? convertToAgGridData(item.response)
+      : null;
+  }
+
+  // Filter out table markup from response text for cleaner display
+  const responseWithoutTable = responseText
     .split("\n")
     .filter((line: string) => !line.includes("|"))
     .join("\n")
     .trim();
+
+  console.log("Rendering ResponseItem:", { item, gridData, responseText });
 
   return (
     <>

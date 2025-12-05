@@ -10,9 +10,9 @@ import {
 
 export const AIProvider = ({ children }: AIProviderProps) => {
   const [prompt, setPrompt] = useState("");
-  const [response, setResponse] = useState("");
+  const [response, setResponse] = useState<any>("");
   const [responses, setResponses] = useState<
-    Array<{ prompt: string; response: string; timestamp: Date }>
+    Array<{ prompt: string; response: any; timestamp: Date }>
   >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +21,7 @@ export const AIProvider = ({ children }: AIProviderProps) => {
     Array<{
       conversation: Array<{
         prompt: string;
-        response: string;
+        response: any;
         timestamp: Date;
       }>;
     }>
@@ -37,10 +37,64 @@ export const AIProvider = ({ children }: AIProviderProps) => {
   };
 
   const deleteHistoryItem = (index: number) => {
-    setHistory(prev => prev.filter((_, i) => i !== index));
+    setHistory((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Function to determine which mock data to return based on prompt content
+  // Function to fetch data from the API endpoint
+  const fetchDataFromAPI = async (inputPrompt: string): Promise<any> => {
+    try {
+      const apiUrl = import.meta.env.VITE_DETAILS_API_URL;
+      console.log("API URL:", apiUrl);
+      if (!apiUrl) {
+        throw new Error("API URL not configured");
+      }
+
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ question: inputPrompt }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Raw API response:", data);
+      
+      // Try to parse the response and return the full JSON object
+      try {
+        // If data.response is a JSON string, parse it
+        if (typeof data.response === 'string' && 
+            (data.response.startsWith('{') || data.response.startsWith('['))) {
+          const jsonData = JSON.parse(data.response);
+          console.log("Returning parsed JSON object:", jsonData);
+          return jsonData;
+        }
+        // If data itself is the response object, return it
+        else if (typeof data === 'object' && data.messages) {
+          console.log("Returning direct response object:", data);
+          return data;
+        }
+        // Fallback: return the original data
+        else {
+          return data;
+        }
+      } catch (error) {
+        console.log("Error parsing response, returning original data:", error);
+        return data;
+      }
+    } catch (error) {
+      console.error("Error fetching from API:", error);
+
+      // Fallback to mock data if API fails
+      return getMockDataBasedOnPrompt(inputPrompt);
+    }
+  };
+
+  // Function to determine which mock data to return based on prompt content (fallback)
   const getMockDataBasedOnPrompt = (inputPrompt: string): string => {
     const lowerPrompt = inputPrompt.toLowerCase();
 
@@ -149,20 +203,17 @@ Please try one of the sample prompts for demo data, or this would connect to you
       setError(null);
       setPrompt(inputPrompt);
 
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-
-      // Get mock response based on prompt content
-      const mockResponse = getMockDataBasedOnPrompt(inputPrompt);
-      console.log("Mock Response:", mockResponse);
-      setResponse(mockResponse);
+      // Fetch data from API endpoint
+      const apiResponse = await fetchDataFromAPI(inputPrompt);
+      console.log("API Response:", apiResponse);
+      setResponse(apiResponse);
 
       // Add to responses array
       setResponses((prev) => [
         ...prev,
         {
           prompt: inputPrompt,
-          response: mockResponse,
+          response: apiResponse,
           timestamp: new Date(),
         },
       ]);
@@ -177,7 +228,7 @@ Please try one of the sample prompts for demo data, or this would connect to you
               conversation: [
                 {
                   prompt: inputPrompt,
-                  response: mockResponse,
+                  response: apiResponse,
                   timestamp: new Date(),
                 },
               ],
@@ -188,7 +239,7 @@ Please try one of the sample prompts for demo data, or this would connect to you
           const updated = [...prev];
           updated[updated.length - 1].conversation.push({
             prompt: inputPrompt,
-            response: mockResponse,
+            response: apiResponse,
             timestamp: new Date(),
           });
           return updated;
