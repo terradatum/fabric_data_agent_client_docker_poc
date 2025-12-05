@@ -399,14 +399,35 @@ def get_run_details():
                             sql_analysis["data_retrieval_query"] = sql_analysis["queries"][0]
                             sql_analysis["data_retrieval_query_index"] = 1
 
+        #Parse markdown table into json data
+        steps_data = steps.model_dump()
+        table_data = []
+        for datum in steps_data["data"]:
+            for tool in datum["step_details"]["tool_calls"]:
+                try:
+                    if tool["function"]["name"] =="trace.analyze_semantic_model":
+                        md_data = tool["function"]["output"]
+                        lines = md_data.strip().split('\n')
+    
+                        # Parse headers (remove brackets and whitespace)
+                        headers = [h.strip().strip('[]') for h in lines[0].split('|') if h.strip()]
+                                             
+                        for line in lines[2:]:
+                            values = [v.strip() for v in line.split('|') if v.strip()]
+                            if values:
+                                table_data.append(dict(zip(headers, values)))
+                except Exception as e:
+                    print(e)
+
         # Build result
         result = {
             "success": True,
             "question": question,
             "run_status": run.status,
-            "run_steps": steps.model_dump(),
+            "run_steps": steps_data,
             "messages": messages_data,
-            "timestamp": time.time()
+            "timestamp": time.time(),
+            "data_table" : table_data
         }
 
         # Add SQL analysis if found
