@@ -11,6 +11,7 @@ import json
 import time
 import uuid
 from flask import Flask, render_template, request, jsonify, session
+from flask_cors import CORS
 from azure.identity import DeviceCodeCredential
 from openai import OpenAI
 import secrets
@@ -22,6 +23,9 @@ warnings.filterwarnings("ignore", category=DeprecationWarning, message=r".*Assis
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
+
+# Enable CORS for all routes - allows React frontend to communicate with Flask backend
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Global variables
 credential = None
@@ -291,11 +295,13 @@ def get_run_details():
                 'question': 'string - the question that was asked',
                 'run_status': 'string - final status of the run (completed, failed, etc.)',
                 'run_steps': 'object - detailed step-by-step execution info',
+                'data_table' : 'object - data table formatted as json key/value pairs',
                 'messages': 'object - full message history',
                 'timestamp': 'number - when the request was processed',
                 'sql_queries': '(optional) array - extracted SQL queries if lakehouse data source',
                 'sql_data_previews': '(optional) array - data previews from query results',
                 'data_retrieval_query': '(optional) string - the specific query that retrieved data'
+                
             },
             'example_curl': 'curl -X POST http://localhost:5000/run-details -H "Content-Type: application/json" -d \'{"question": "What tables are available?"}\''
         })
@@ -395,14 +401,35 @@ def get_run_details():
                             sql_analysis["data_retrieval_query"] = sql_analysis["queries"][0]
                             sql_analysis["data_retrieval_query_index"] = 1
 
+        #Parse markdown table into json data
+        steps_data = steps.model_dump()
+        table_data = []
+        for datum in steps_data["data"]:
+            for tool in datum["step_details"]["tool_calls"]:
+                try:
+                    if tool["function"]["name"] =="trace.analyze_semantic_model":
+                        md_data = tool["function"]["output"]
+                        lines = md_data.strip().split('\n')
+    
+                        # Parse headers (remove brackets and whitespace)
+                        headers = [h.strip().strip('[]') for h in lines[0].split('|') if h.strip()]
+                                             
+                        for line in lines[2:]:
+                            values = [v.strip() for v in line.split('|') if v.strip()]
+                            if values:
+                                table_data.append(dict(zip(headers, values)))
+                except Exception as e:
+                    print(e)
+
         # Build result
         result = {
             "success": True,
             "question": question,
             "run_status": run.status,
-            "run_steps": steps.model_dump(),
+            "run_steps": steps_data,
             "messages": messages_data,
-            "timestamp": time.time()
+            "timestamp": time.time(),
+            "data_table" : table_data
         }
 
         # Add SQL analysis if found
