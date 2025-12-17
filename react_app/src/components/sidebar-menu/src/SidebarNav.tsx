@@ -11,6 +11,7 @@ import {
   plus,
   drawer_close,
   drawer_open,
+  robot,
 } from "@helix/helix-icon/outlined";
 import { Tooltip } from "@helix/tooltip";
 
@@ -51,6 +52,25 @@ const menuItems = [
         id: "automations",
         text: "Automations",
         url: "/foundation/automations",
+      },
+    ],
+  },
+  {
+    id: "LWAI",
+    text: "LWAI",
+    icon: "robot",
+    active: false,
+    links: [
+      {
+        id: "chat",
+        text: "Chat",
+        url: "/",
+        active: true,
+      },
+      {
+        id: "charts",
+        text: "Charts",
+        url: "/charts",
       },
     ],
   },
@@ -159,7 +179,7 @@ const clients = [
 
 const SidebarNav: React.FC<SidebarNavProps> = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [activeMenuItem, setActiveMenuItem] = useState("foundation");
+  const [activeMenuItem, setActiveMenuItem] = useState("LWAI");
   const [hoveredMenuItem, setHoveredMenuItem] = useState<string | null>(null);
   const [currentClient, setCurrentClient] = useState(clients[0]);
 
@@ -215,6 +235,8 @@ const SidebarNav: React.FC<SidebarNavProps> = () => {
         return arrows_exchange;
       case "plus":
         return plus;
+      case "robot":
+        return robot;
       default:
         return null;
     }
