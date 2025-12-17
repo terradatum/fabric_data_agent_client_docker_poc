@@ -41,7 +41,7 @@ const PageWrapper = ({
           <>
             {responses.length > 0 || showHistory ? (
               <button
-                className='helix-btn helix-btn--tertiary header-button'
+                className='helix-btn helix-btn--ghost'
                 onClick={handleBackClick}
                 style={{}}
                 aria-label={showHistory ? "Close history" : "Go back"}
