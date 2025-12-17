@@ -15,10 +15,6 @@ import {
 } from "@helix/helix-icon/outlined";
 import { Tooltip } from "@helix/tooltip";
 
-interface SidebarNavProps {
-  // Add props as needed
-}
-
 const menuItems = [
   {
     id: "foundation",
@@ -83,12 +79,12 @@ const menuItems = [
       {
         id: "analytics",
         text: "Analytics",
-        url: "/brokermetrics/analytics",
+        url: "#",
       },
       {
         id: "reports",
         text: "Reports",
-        url: "/brokermetrics/reports",
+        url: "#",
       },
     ],
   },
@@ -101,12 +97,12 @@ const menuItems = [
       {
         id: "documents",
         text: "Documents",
-        url: "/authentisign/documents",
+        url: "#",
       },
       {
         id: "signatures",
         text: "Signatures",
-        url: "/authentisign/signatures",
+        url: "#",
       },
     ],
   },
@@ -119,12 +115,12 @@ const menuItems = [
       {
         id: "transactions",
         text: "Transactions",
-        url: "/transact/transactions",
+        url: "#",
       },
       {
         id: "history",
         text: "History",
-        url: "/transact/history",
+        url: "#",
       },
     ],
   },
@@ -137,12 +133,12 @@ const menuItems = [
       {
         id: "clients",
         text: "Clients",
-        url: "/relationships/clients",
+        url: "#",
       },
       {
         id: "prospects",
         text: "Prospects",
-        url: "/relationships/prospects",
+        url: "#",
       },
     ],
   },
@@ -154,34 +150,10 @@ const menuItems = [
   },
 ];
 
-const clients = [
-  {
-    id: "emma-mckenna",
-    name: "Emma McKenna",
-    logo: "https://assets.lwolf.com/img/lw-logo.png",
-  },
-  {
-    id: "john-doe",
-    name: "John Doe",
-    logo: "https://assets.lwolf.com/img/lw-logo.png",
-  },
-  {
-    id: "jane-smith",
-    name: "Jane Smith",
-    logo: "https://assets.lwolf.com/img/lw-logo.png",
-  },
-  {
-    id: "acme-corp",
-    name: "ACME Corporation",
-    logo: "https://assets.lwolf.com/img/lw-logo.png",
-  },
-];
-
-const SidebarNav: React.FC<SidebarNavProps> = () => {
+const SidebarNav = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeMenuItem, setActiveMenuItem] = useState("LWAI");
   const [hoveredMenuItem, setHoveredMenuItem] = useState<string | null>(null);
-  const [currentClient, setCurrentClient] = useState(clients[0]);
 
   const toggleCollapsed = () => {
     setIsCollapsed(!isCollapsed);
@@ -207,14 +179,6 @@ const SidebarNav: React.FC<SidebarNavProps> = () => {
     if (itemId === "apps") return;
     setActiveMenuItem(itemId);
     setHoveredMenuItem(null);
-  };
-
-  const handleClientSelect = (client: {
-    id: string;
-    name: string;
-    logo?: string;
-  }) => {
-    setCurrentClient(client as (typeof clients)[0]);
   };
 
   const displayedMenuItem = getDisplayedMenuItem();
