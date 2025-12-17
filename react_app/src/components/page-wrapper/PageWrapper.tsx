@@ -2,6 +2,7 @@ import { Navbar, NavbarBody, NavbarIconAction } from "@helix/navbar";
 import { useAI } from "@context/useAI";
 import { HelixIcon } from "@helix/helix-icon";
 import { arrow_left } from "@helix/helix-icon/outlined";
+import { SidebarNav, Topbar } from "@components/sidebar-menu";
 
 const PageWrapper = ({
   children,
@@ -33,24 +34,29 @@ const PageWrapper = ({
     }
   };
   return (
-    <div className=''>
-      <Navbar dataLwtId='LW-AIDemo' title='LW AI Demo' hideLogo>
-        <NavbarBody>
-          {responses.length > 0 || showHistory ? (
-            <NavbarIconAction
-              onClick={handleBackClick}
-              aria-label={showHistory ? "Close history" : "Go back"}
-            >
-              <HelixIcon
-                icon={arrow_left}
-                className='helix-mr-1 helix-svg-fill--brand'
-              />
-              <span className='helix-text-brand'>Back</span>
-            </NavbarIconAction>
-          ) : null}
-        </NavbarBody>
-      </Navbar>
-      <main className='helix-container--fluid'>{children}</main>
+    <div className='helix-d-flex'>
+      <SidebarNav />
+      <div className='helix-d-flex helix-flex-1 helix-flex-direction--column'>
+        <Topbar>
+          <>
+            {responses.length > 0 || showHistory ? (
+              <button
+                className='helix-btn helix-btn--tertiary header-button'
+                onClick={handleBackClick}
+                style={{}}
+                aria-label={showHistory ? "Close history" : "Go back"}
+              >
+                <HelixIcon
+                  icon={arrow_left}
+                  className='helix-mr-1 helix-svg-fill--brand'
+                />
+                <span className='helix-text-brand'>Back</span>
+              </button>
+            ) : null}
+          </>
+        </Topbar>
+        <main className='helix-container--fluid'>{children}</main>
+      </div>
     </div>
   );
 };

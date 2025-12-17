@@ -198,3 +198,8 @@
         opacity: 0;
     }
 }
+
+:global(.header-button:not(:disabled):not(:hover)) {
+    background-color: transparent !important;
+
+}
