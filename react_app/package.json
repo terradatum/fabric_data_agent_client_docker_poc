@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@helix/ag-charts": "^1.2.1",
     "@helix/ag-grid": "^6.0.13",
     "@helix/alert": "^3.1.4",
     "@helix/dropdown-button": "^2.5.14",

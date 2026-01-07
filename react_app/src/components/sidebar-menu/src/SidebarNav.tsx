@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import styles from "./SidebarNav.module.scss";
 import { HelixIcon } from "@helix/helix-icon";
 import {
@@ -9,9 +9,9 @@ import {
   line_chart,
   arrows_exchange,
   plus,
-  drawer_close,
-  drawer_open,
   robot,
+  chevron_small_right,
+  wolfie,
 } from "@helix/helix-icon/outlined";
 import { Tooltip } from "@helix/tooltip";
 
@@ -61,7 +61,6 @@ const menuItems = [
         id: "chat",
         text: "Chat",
         url: "/",
-        active: true,
       },
       {
         id: "charts",
@@ -210,6 +209,9 @@ const SidebarNav = () => {
       className={`${styles["sidebar-nav-container"]} ${
         isCollapsed ? styles["sidebar-nav-container--collapsed"] : ""
       }`}
+      style={{
+        position: "relative",
+      }}
     >
       <div className={styles["sidebar-nav"]}>
         <div className={styles["sidebar-nav__header"]}>
@@ -218,15 +220,17 @@ const SidebarNav = () => {
               isCollapsed ? styles["collapsed"] : ""
             }`}
           >
-            <button
-              className={styles["sidebar-nav__header__collapse"]}
-              onClick={toggleCollapsed}
-            >
+            <div className='helix-d-flex helix-align--center helix-gap-2'>
               <HelixIcon
-                icon={isCollapsed ? drawer_open : drawer_close}
-                className={styles["sidebar-nav__header__collapse__icon"]}
+                icon={wolfie}
+                className='helix-svg-fill--helix-brand'
+                style={{
+                  width: "32px",
+                  height: "32px",
+                }}
               />
-            </button>
+              {!isCollapsed && <>LWAI</>}
+            </div>
           </div>
         </div>
         <div className={styles["sidebar-nav__panels"]}>
@@ -236,6 +240,7 @@ const SidebarNav = () => {
           >
             {menuItems.map((item) => {
               const IconComponent = getIconComponent(item.icon);
+              // active if the url matches the current location in the url bar
               return (
                 <>
                   <button
@@ -277,26 +282,55 @@ const SidebarNav = () => {
               </div>
             </div>
             <div className={styles["sidebar-nav__links"]}>
-              {displayedMenuItem?.links?.map((link) => (
-                <a
-                  key={link.id}
-                  href={link.url}
-                  className={`${styles["sidebar-nav__link"]} ${
-                    link.active ? styles["sidebar-nav__link--active"] : ""
-                  }`}
-                >
-                  {link.text}
-                  {link.count && (
-                    <span className={styles["sidebar-nav__link__count"]}>
-                      {link.count}
-                    </span>
-                  )}
-                </a>
-              )) || []}
+              {displayedMenuItem?.links?.map((link) => {
+                // get the url and if the url matches the current location
+                const isActive = link.url === window.location.pathname;
+                link.active = isActive;
+                return (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    className={`${styles["sidebar-nav__link"]} ${
+                      link.active ? styles["sidebar-nav__link--active"] : ""
+                    }`}
+                  >
+                    {link.text}
+                    {link.count && (
+                      <span className={styles["sidebar-nav__link__count"]}>
+                        {link.count}
+                      </span>
+                    )}
+                  </a>
+                );
+              }) || []}
             </div>
           </div>
         </div>
       </div>
+      <button
+        className='Close'
+        onClick={toggleCollapsed}
+        style={{
+          cursor: "pointer",
+          position: "absolute",
+          top: 80,
+          right: -12,
+          background: "white",
+          border: "solid 1px #ccc",
+          borderRadius: "50%",
+          width: "24px",
+          height: "24px",
+          zIndex: 999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <HelixIcon
+          icon={chevron_small_right}
+          className='helix-flex-shrink--0'
+        />
+      </button>
     </div>
   );
 };

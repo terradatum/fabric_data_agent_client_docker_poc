@@ -444,6 +444,14 @@
   resolved "http://npm-repo.lab.lwolf.com/@foliojs-fork%2frestructure/-/restructure-2.0.2.tgz#73759aba2aff1da87b7c4554e6839c70d43c92b4"
   integrity sha512-59SgoZ3EXbkfSX7b63tsou/SDGzwUEK6MuB5sKqgVK1/XE0fxmpsOb9DQI8LXW3KfGnAjImCGhhEb7uPPAUVNA==
 
+"@helix/ag-charts@^1.2.1":
+  version "1.2.1"
+  resolved "http://npm-repo.lab.lwolf.com/@helix%2fag-charts/-/ag-charts-1.2.1.tgz#2cc422a45644cd977b8372846eda5202a9a0be26"
+  integrity sha512-K6iXZTDQvSxaRFiU9MeVfx/sgRLVhhpQ9MvyRuscjGy6/0EQNeRsvhrsgU6NpTxuPhdQ7ZLCIyPGo3E9bOphow==
+  dependencies:
+    ag-charts-community "10.1.0"
+    ag-charts-react "10.1.0"
+
 "@helix/ag-grid@^6.0.13":
   version "6.0.13"
   resolved "http://npm-repo.lab.lwolf.com/@helix%2fag-grid/-/ag-grid-6.0.13.tgz#e494156890c863e247d1a4ce38dfc379d44a7ae6"
@@ -1257,10 +1265,33 @@ acorn@^8.15.0:
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.15.0.tgz#a360898bc415edaac46c8241f6383975b930b816"
   integrity sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg==
 
+ag-charts-community@10.1.0:
+  version "10.1.0"
+  resolved "https://registry.yarnpkg.com/ag-charts-community/-/ag-charts-community-10.1.0.tgz#c82e1d389b475b8b6317ed09c68dc494470ff7c9"
+  integrity sha512-Vbie015E3nb3ijw1xJjdgQnFSnVQcFpVy9lxJ/3ZSEYMznQApeAJ1a1G6J0mlPbU5xc3V1Y7rVHoisOmv8swHw==
+  dependencies:
+    ag-charts-locale "10.1.0"
+    ag-charts-types "10.1.0"
+
 ag-charts-community@9.3.2:
   version "9.3.2"
   resolved "http://npm-repo.lab.lwolf.com/ag-charts-community/-/ag-charts-community-9.3.2.tgz#f3229fb0a8077441b1accee19a5373635e0e44ce"
   integrity sha512-jw2llxTYzGAZ24m7eQsKS24BnJBhspZKsL03DbqH0wxLepbEcC3eeWICe+02TBQCbFVsWmSsYukjzQg3FkVWRw==
+
+ag-charts-locale@10.1.0:
+  version "10.1.0"
+  resolved "https://registry.yarnpkg.com/ag-charts-locale/-/ag-charts-locale-10.1.0.tgz#ec8d0fd803fec9ed96f3fe181348a7032322f959"
+  integrity sha512-cClD9SeWtwnpwlPqrjR3weBuoF/wkL3K0bOndseDbv8SIDNL02PeMQoEEo8r3S5gTGBHfjYo2SghiiRNhRPFsg==
+
+ag-charts-react@10.1.0:
+  version "10.1.0"
+  resolved "https://registry.yarnpkg.com/ag-charts-react/-/ag-charts-react-10.1.0.tgz#78a209b3ba52b2ed4eb72a7ab8f4a2f7beeb5f6d"
+  integrity sha512-+TCONJCM0zeU7KudP/sjwx7uwtJKFlpvtmrA/5HhtH9KOTfq/M6yeoH5f5UNt2+RncowVXWyAIgzt12WQ6uFtA==
+
+ag-charts-types@10.1.0:
+  version "10.1.0"
+  resolved "https://registry.yarnpkg.com/ag-charts-types/-/ag-charts-types-10.1.0.tgz#f265665f6b92742bb0bc2dcfab319b21e6d78749"
+  integrity sha512-pk9ft8hbgTXJ/thI/SEUR1BoauNplYExpcHh7tMOqVikoDsta1O15TB1ZL4XWnl4TPIzROBmONKsz7d8a2HBuQ==
 
 ag-grid-community@31.3.4, ag-grid-community@^31.3.1:
   version "31.3.4"

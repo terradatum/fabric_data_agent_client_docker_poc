@@ -66,7 +66,7 @@ const ResponseItem: React.FC<ResponseItemProps> = ({
       if (dataTable.length > 0) {
         // Create column definitions from the keys of the first row
         const columnDefs = Object.keys(dataTable[0]).map((key) => ({
-          headerName: key.replace(/["\[\]]/g, '').replace(/_/g, ' '), // Clean up header names and replace underscores with spaces
+          headerName: key.replace(/["[\]]/g, '').replace(/_/g, ' '), // Clean up header names and replace underscores with spaces
           field: key,
           sortable: true,
           resizable: true,

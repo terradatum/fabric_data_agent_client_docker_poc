@@ -1,4 +1,3 @@
-import { Navbar, NavbarBody, NavbarIconAction } from "@helix/navbar";
 import { useAI } from "@context/useAI";
 import { HelixIcon } from "@helix/helix-icon";
 import { arrow_left } from "@helix/helix-icon/outlined";
@@ -36,7 +35,7 @@ const PageWrapper = ({
   return (
     <div className='helix-d-flex'>
       <SidebarNav />
-      <div className='helix-d-flex helix-flex-1 helix-flex-direction--column'>
+      <div className='helix-d-flex helix-flex-1 helix-flex-direction--column helix-overflow--auto'>
         <Topbar>
           <>
             {responses.length > 0 || showHistory ? (
@@ -55,7 +54,7 @@ const PageWrapper = ({
             ) : null}
           </>
         </Topbar>
-        <main className='helix-container--fluid'>{children}</main>
+        <main className='helix-container--fluid helix-p-0'>{children}</main>
       </div>
     </div>
   );
