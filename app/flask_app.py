@@ -17,6 +17,8 @@ from openai import OpenAI
 import secrets
 import warnings
 import requests
+import pandas as pd
+import pyodbc
 
 # Suppress OpenAI deprecation warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning, message=r".*Assistants API is deprecated.*")
@@ -104,15 +106,131 @@ def get_or_create_thread(data_agent_url, thread_name=None):
 
     return thread
 
+def load_query_config():
+    """Load query configuration from query_config.json."""
+    config_path = os.path.join(os.path.dirname(__file__), 'query_config.json')
+    try:
+        with open(config_path, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        raise ValueError(f"Query configuration file not found at {config_path}")
+    except json.JSONDecodeError:
+        raise ValueError(f"Invalid JSON in query configuration file at {config_path}")
+
+def get_database_connection():
+    """
+    Create and return a pyodbc connection to Azure SQL database.
+    Uses the same Azure AD token as the Fabric Data Agent authentication.
+    """
+    import struct
+
+    config = load_query_config()
+    db_config = config.get('database', {})
+
+    server = db_config.get('server')
+    database = db_config.get('database')
+    driver = db_config.get('driver', 'ODBC Driver 18 for SQL Server')
+    port = db_config.get('port', 1433)
+    encrypt = db_config.get('encrypt', True)
+    trust_cert = db_config.get('trust_server_certificate', False)
+
+    if not server or not database:
+        raise ValueError("Database server and database name must be configured in query_config.json")
+
+    # Get Azure AD token using the same credential as Fabric Data Agent
+    # Request token for database scope instead of Fabric API scope
+    current_token = credential.get_token("https://database.windows.net/.default")
+    access_token = current_token.token
+
+    # Connection string without authentication info
+    conn_str = (
+        f"Driver={{{driver}}};"
+        f"Server={server},{port};"
+        f"Database={database};"
+        f"Encrypt={'yes' if encrypt else 'no'};"
+        f"TrustServerCertificate={'yes' if trust_cert else 'no'};"
+    )
+
+    # SQL_COPT_SS_ACCESS_TOKEN constant for setting Azure AD token
+    SQL_COPT_SS_ACCESS_TOKEN = 1256
+
+    # Properly encode the token for SQL Server
+    # The token must be in UTF-16-LE format with a specific structure
+    token_bytes = access_token.encode('utf-16-le')
+    token_struct = struct.pack(f'<I{len(token_bytes)}s', len(token_bytes), token_bytes)
+
+    # Create connection with pre-connect attribute for token
+    conn = pyodbc.connect(conn_str, attrs_before={SQL_COPT_SS_ACCESS_TOKEN: token_struct})
+
+    return conn
+
+def execute_query_by_alias(query_alias):
+    """
+    Execute a SQL query by its alias from query_config.json.
+    Returns the results formatted as a list of dictionaries.
+    """
+    config = load_query_config()
+    queries = config.get('queries', {})
+
+    if query_alias not in queries:
+        available_aliases = list(queries.keys())
+        raise ValueError(f"Query alias '{query_alias}' not found. Available aliases: {available_aliases}")
+
+    query_info = queries[query_alias]
+    query = query_info.get('query')
+
+    if not query:
+        raise ValueError(f"No query found for alias '{query_alias}'")
+
+    conn = get_database_connection()
+
+    try:
+        # Use pandas to read SQL with pyodbc connection
+        df = pd.read_sql(query, conn)
+
+        # Convert DataFrame to list of dictionaries (similar to data_table format)
+        result_data = df.to_dict('records')
+
+        return {
+            'success': True,
+            'query_alias': query_alias,
+            'query_name': query_info.get('name', ''),
+            'query_description': query_info.get('description', ''),
+            'data_table': result_data,
+            'row_count': len(result_data),
+            'columns': list(df.columns),
+            'timestamp': time.time()
+        }
+    except Exception as e:
+        raise Exception(f"Error executing query '{query_alias}': {str(e)}")
+    finally:
+        # Close the connection
+        conn.close()
+
 @app.route('/')
 def index():
     """Render the main page with input form."""
     return render_template('index.html')
 
-@app.route('/auth/start', methods=['POST'])
+@app.route('/auth/start', methods=['GET', 'POST'])
 def start_auth():
     """Start device code authentication flow."""
     global credential, auth_in_progress, device_code_info
+
+    # Handle GET request - return usage info
+    if request.method == 'GET':
+        return jsonify({
+            'endpoint': '/auth/start',
+            'method': 'POST',
+            'description': 'Start Azure AD device code authentication flow',
+            'response_fields': {
+                'success': 'boolean - whether authentication started successfully',
+                'device_code': 'string - the code to enter at the verification URL',
+                'verification_uri': 'string - the URL to visit for authentication',
+                'expires_in': 'number - seconds until the device code expires'
+            },
+            'example_curl': 'curl -X POST http://localhost:5000/auth/start -H "Content-Type: application/json"'
+        })
 
     try:
         tenant_id, _ = get_config()
@@ -880,6 +998,85 @@ def find_sql_in_text(text: str) -> list:
 
     return sql_queries
 
+
+@app.route('/execute-query', methods=['GET', 'POST'])
+def execute_query():
+    """
+    Execute a SQL query from query_config.json by its alias.
+    Returns data in the same structure as /run-details data_table.
+    """
+    # Handle GET request - return usage info
+    if request.method == 'GET':
+        try:
+            config = load_query_config()
+            available_queries = {}
+            for alias, query_info in config.get('queries', {}).items():
+                available_queries[alias] = {
+                    'name': query_info.get('name', ''),
+                    'description': query_info.get('description', '')
+                }
+
+            return jsonify({
+                'endpoint': '/execute-query',
+                'method': 'POST',
+                'description': 'Execute a SQL query by its alias from query_config.json',
+                'request_body': {
+                    'query_alias': '(required) The alias of the query to execute'
+                },
+                'response_fields': {
+                    'success': 'boolean - whether the request succeeded',
+                    'query_alias': 'string - the alias that was executed',
+                    'query_name': 'string - the name of the query',
+                    'query_description': 'string - description of the query',
+                    'data_table': 'array - query results as list of objects',
+                    'row_count': 'number - number of rows returned',
+                    'columns': 'array - column names',
+                    'timestamp': 'number - when the query was executed'
+                },
+                'available_queries': available_queries,
+                'example_curl': 'curl -X POST http://localhost:5000/execute-query -H "Content-Type: application/json" -d \'{"query_alias": "contact_opportunities"}\''
+            })
+        except Exception as e:
+            return jsonify({
+                'error': f'Could not load query configuration: {str(e)}'
+            }), 500
+
+    # Handle POST request - execute query
+    try:
+        # Check if authenticated
+        if token is None or token.expires_on <= time.time():
+            return jsonify({
+                'success': False,
+                'error': 'Not authenticated. Please complete authentication first.',
+                'needs_auth': True
+            }), 401
+
+        data = request.get_json()
+        query_alias = data.get('query_alias', '').strip()
+
+        if not query_alias:
+            return jsonify({
+                'success': False,
+                'error': 'query_alias is required'
+            }), 400
+
+        # Execute the query
+        result = execute_query_by_alias(query_alias)
+        return jsonify(result)
+
+    except ValueError as e:
+        print(f"Validation error in /execute-query endpoint: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 400
+
+    except Exception as e:
+        print(f"Error in /execute-query endpoint: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @app.route('/health')
 def health():
