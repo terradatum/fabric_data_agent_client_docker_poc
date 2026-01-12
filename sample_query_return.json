@@ -1,0 +1,17 @@
+{
+  "columns": ["crm_contact_lead_source", ""],
+  "data_table": [
+    { "": 9, "crm_contact_lead_source": "Google Contact" },
+    { "": 1, "crm_contact_lead_source": "Microsoft Contact" },
+    { "": 2, "crm_contact_lead_source": "Prospecting" },
+    { "": 1, "crm_contact_lead_source": "Social Media/Ad" },
+    { "": 5, "crm_contact_lead_source": "Website" },
+    { "": 33, "crm_contact_lead_source": "Zillow" }
+  ],
+  "query_alias": "contact_opportunities",
+  "query_description": "Show all contact opportunities created between August 1, 2024 and today that were converted to transactions and group by contact lead sources",
+  "query_name": "Contact Opportunities by Lead Source",
+  "row_count": 6,
+  "success": true,
+  "timestamp": 1768246753.334951
+}
