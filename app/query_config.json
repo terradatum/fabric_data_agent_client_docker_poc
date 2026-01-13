@@ -1,0 +1,43 @@
+{
+  "database": {
+    "server": "gblyvi3yxkhevoygeufegfy35y-aagdbmim5x6enpb5wq4bzg6q44.datawarehouse.fabric.microsoft.com",
+    "database": "wh_transact_gold_layer",
+    "driver": "ODBC Driver 18 for SQL Server",
+    "port": 1433,
+    "encrypt": true,
+    "trust_server_certificate": false,
+    "comment": "Authentication uses the same Azure AD token as Fabric Data Agent"
+  },
+  "queries": {
+    "converted_contacts_with_details": {
+      "name": "Converted Contact Opportunities with Full Details",
+      "description": "Show all contact opportunities created between August 1, 2024 and June 30, 2025 that were converted to transactions. Include the contact's first name, last name, client name, and lead source, and order the results by the contact's first name.",
+      "query": ";WITH CTE_Opportunity AS\n(\nSELECT crm_contact_user_key\n      ,crm_contact_key\n      ,crm_contact_opportunity_key\n  FROM [dbo].[FactCRMContactOpportunity]\n WHERE crm_contact_opportunity_created_at >= '08/01/2024'\n   AND crm_contact_opportunity_created_at < '07/01/2025'\n)\nSELECT DISTINCT t_dcc.crm_contact_first_name\n      ,t_dcc.crm_contact_last_name\n      ,t_dcl.client_name\n      ,t_dcc.crm_contact_lead_source\n  FROM CTE_Opportunity                              t_co\n  JOIN [dbo].[FactCRMOpportunityTransaction]        t_ot  \n    ON t_ot.crm_contact_opportunity_key           = t_co.crm_contact_opportunity_key\n  LEFT JOIN dbo.DimCRMUser                          t_du\n    ON t_co.crm_contact_user_key                  = t_du.crm_user_key\n  LEFT JOIN dbo.DimCRMContact                       t_dcc\n    ON t_co.crm_contact_key                       = t_dcc.crm_contact_key\n  LEFT JOIN dbo.DimClient                           t_dcl\n    ON t_ot.crm_contact_client_key                = t_dcl.client_key\nORDER BY t_dcc.crm_contact_first_name"
+    },
+    "converted_contacts_with_closing_dates": {
+      "name": "Converted Contacts with Offer Closing Dates",
+      "description": "Show all contact opportunities created between August 1, 2024 and today that were converted to transactions and the transaction has an offer closing date. Include the contact's first name, last name, client name, lead source, transaction_id and offer closing date.",
+      "query": ";WITH CTE_Opportunity AS\n(\nSELECT crm_contact_user_key\n      ,crm_contact_key\n      ,crm_contact_opportunity_key\n  FROM [dbo].[FactCRMContactOpportunity]\n WHERE crm_contact_opportunity_created_at >= '08/01/2024'\n   AND crm_contact_opportunity_created_at < GETDATE()\n)\nSELECT DISTINCT t_dcc.crm_contact_first_name\n      ,t_dcc.crm_contact_last_name\n      ,t_dcl.client_name\n      ,t_dcc.crm_contact_lead_source\n      ,t_dtr.transaction_id\n      ,t_ft.offer_closing_date\n  FROM CTE_Opportunity                                   t_co\n  JOIN [dbo].[FactCRMOpportunityTransaction]             t_ot  \n    ON t_ot.crm_contact_opportunity_key                = t_co.crm_contact_opportunity_key\n  LEFT JOIN dbo.DimCRMUser                               t_du\n    ON t_co.crm_contact_user_key                       = t_du.crm_user_key\n  LEFT JOIN dbo.DimCRMContact                            t_dcc\n    ON t_co.crm_contact_key                            = t_dcc.crm_contact_key\n  LEFT JOIN dbo.DimClient                                t_dcl\n    ON t_ot.crm_contact_client_key                     = t_dcl.client_key\n  LEFT JOIN dbo.FactTransaction                          t_ft\n    ON t_ot.crm_contact_opportunity_to_transaction_key = t_ft.opportunity_key\n  LEFT JOIN dbo.DimTransaction                           t_dtr\n    ON t_ft.transaction_key                            = t_dtr.transaction_key\nWHERE t_ft.offer_closing_date IS NOT NULL\nORDER BY t_dcc.crm_contact_first_name"
+    },
+    "conversions_by_lead_source": {
+      "name": "Conversion Count by Lead Source (Alphabetical)",
+      "description": "Show all contact opportunities created between August 1, 2024 and today that were converted to transactions and group by contact lead sources ordered alphabetically by lead source.",
+      "query": ";WITH CTE_Opportunity AS\n(\nSELECT crm_contact_user_key\n      ,crm_contact_key\n      ,crm_contact_opportunity_key\n  FROM [dbo].[FactCRMContactOpportunity]\n WHERE crm_contact_opportunity_created_at >= '08/01/2024'\n   AND crm_contact_opportunity_created_at < GETDATE()\n)\nSELECT t_dcc.crm_contact_lead_source\n      ,COUNT(*) AS count\n  FROM CTE_Opportunity                                   t_co\n  JOIN [dbo].[FactCRMOpportunityTransaction]             t_ot  \n    ON t_ot.crm_contact_opportunity_key                = t_co.crm_contact_opportunity_key\n  JOIN dbo.DimCRMContact                                 t_dcc\n    ON t_co.crm_contact_key                            = t_dcc.crm_contact_key\n GROUP BY t_dcc.crm_contact_lead_source\n ORDER BY t_dcc.crm_contact_lead_source"
+    },
+    "top_converting_lead_sources": {
+      "name": "Top Converting Lead Sources (Ranked by Count)",
+      "description": "Show all contact opportunities created between August 1, 2024 and today that were converted to transactions, grouped by contact lead sources and ordered by converted opportunity count descending.",
+      "query": ";WITH CTE_Opportunity AS\n(\nSELECT crm_contact_user_key\n      ,crm_contact_key\n      ,crm_contact_opportunity_key\n  FROM [dbo].[FactCRMContactOpportunity]\n WHERE crm_contact_opportunity_created_at >= '08/01/2024'\n   AND crm_contact_opportunity_created_at < GETDATE()\n)\nSELECT t_dcc.crm_contact_lead_source\n      ,COUNT(*) AS count\n  FROM CTE_Opportunity                                   t_co\n  JOIN [dbo].[FactCRMOpportunityTransaction]             t_ot  \n    ON t_ot.crm_contact_opportunity_key                = t_co.crm_contact_opportunity_key\n  JOIN dbo.DimCRMContact                                 t_dcc\n    ON t_co.crm_contact_key                            = t_dcc.crm_contact_key\n GROUP BY t_dcc.crm_contact_lead_source\n ORDER BY COUNT(*) DESC"
+    },
+    "opportunity_conversion_time": {
+      "name": "Days to Convert Opportunity to Transaction",
+      "description": "For contact opportunities created between August 1, 2024 and today, show the number of days it took for each opportunity to be converted to a transaction, ordered by conversion time.",
+      "query": ";WITH OppSummary AS (\n    SELECT\n        o.crm_contact_opportunity_key,\n        MIN(o.crm_contact_opportunity_created_at) AS created_date,\n        MIN(t.crm_contact_opportunity_to_transaction_created_at) AS conversion_date\n    FROM FactCRMContactOpportunity o\n    LEFT JOIN FactCRMOpportunityTransaction t\n        ON o.crm_contact_opportunity_key = t.crm_contact_opportunity_key\n    WHERE o.crm_contact_opportunity_created_at >= '2024-08-01'\n      AND o.crm_contact_opportunity_created_at <= GETDATE()\n    GROUP BY o.crm_contact_opportunity_key\n)\nSELECT\n    t_do.crm_contact_opportunity_id As opportunity_id,\n    created_date,\n    conversion_date,\n    DATEDIFF(day, created_date, conversion_date) AS days_to_convert\nFROM OppSummary t_o\nJOIN DimCRMContactOpportunity t_do\n  ON t_o.crm_contact_opportunity_key = t_do.crm_contact_opportunity_key\nWHERE conversion_date IS NOT NULL\nORDER BY days_to_convert ASC, t_do.crm_contact_opportunity_id ASC"
+    },
+    "sample_query": {
+      "name": "Sample Query - Information Schema Tables",
+      "description": "A simple sample query to test the connection - returns first 10 tables from information schema.",
+      "query": "SELECT TOP 10 * FROM INFORMATION_SCHEMA.TABLES"
+    }
+  }
+}
