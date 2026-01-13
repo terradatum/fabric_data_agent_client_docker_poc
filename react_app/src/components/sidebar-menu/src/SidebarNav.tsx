@@ -214,25 +214,6 @@ const SidebarNav = () => {
       }}
     >
       <div className={styles["sidebar-nav"]}>
-        <div className={styles["sidebar-nav__header"]}>
-          <div
-            className={`${styles["sidebar-nav__header__content"]} ${
-              isCollapsed ? styles["collapsed"] : ""
-            }`}
-          >
-            <div className='helix-d-flex helix-align--center helix-gap-2'>
-              <HelixIcon
-                icon={wolfie}
-                className='helix-svg-fill--helix-brand'
-                style={{
-                  width: "32px",
-                  height: "32px",
-                }}
-              />
-              {!isCollapsed && <>LWAI</>}
-            </div>
-          </div>
-        </div>
         <div className={styles["sidebar-nav__panels"]}>
           <div
             className={styles["sidebar-nav__main"]}
@@ -313,7 +294,7 @@ const SidebarNav = () => {
         style={{
           cursor: "pointer",
           position: "absolute",
-          top: 80,
+          top: 20,
           right: -12,
           background: "white",
           border: "solid 1px #ccc",
