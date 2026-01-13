@@ -1,0 +1,5 @@
+// Example environment variables for the React app
+// Rename this file to .env.local and adjust values as needed
+VITE_DETAILS_API_URL=http://localhost:5000/run-details
+// changed from 5000 to the port you prefer
+VITE_API_PORT=5000
