@@ -1,20 +1,32 @@
 import { PageWrapper } from "@components/page-wrapper";
 import { useState, useEffect } from "react";
+import { AGGridHelix } from "@helix/ag-grid";
+import { HelixIcon } from "@helix/helix-icon";
+import { arrow_left } from "@helix/helix-icon/outlined";
 
 const API_PORT = import.meta.env.VITE_API_PORT || 5001;
 
-function Charts() {
+function Queries() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [queries, setQueries] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [queryDetails, setQueryDetails] = useState<any>(null);
+  const [, setQueryDetails] = useState<any>(null);
   const [authStatus, setAuthStatus] = useState<boolean>(false);
   const [authInProgress, setAuthInProgress] = useState<boolean>(false);
   const [deviceCode, setDeviceCode] = useState<string | null>(null);
   const [verificationUri, setVerificationUri] = useState<string | null>(null);
+  const [gridData, setGridData] = useState<{
+    columnDefs: never[];
+    rowData: never[];
+  } | null>(null);
+  const [loading, setLoading] = useState(false); // Updated loading state
+  const [showGrid, setShowGrid] = useState(false);
+  const [currentQueryLabel, setCurrentQueryLabel] =
+    useState<string>("Queries Page"); // Track the current title
 
-  const fetchQueryDetails = async (queryAlias: string) => {
+  const fetchQueryDetails = async (queryAlias: string, queryLabel: string) => {
+    setLoading(true); // Set loading to true when fetching starts
     try {
       const response = await fetch(
         `http://localhost:${API_PORT}/execute-query`,
@@ -33,12 +45,34 @@ function Charts() {
 
       const data = await response.json();
       setQueryDetails(data);
+
+      if (data.success) {
+        // Transform the data into AGGridHelix-compatible format
+        const columnDefs = data.columns.map((col: string) => ({
+          headerName: col
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, (char: string) => char.toUpperCase()),
+          field: col,
+          sortable: true,
+          resizable: true,
+          flex: 1,
+        }));
+
+        setGridData({
+          columnDefs,
+          rowData: data.data_table,
+        });
+        setShowGrid(true); // Show the grid
+        setCurrentQueryLabel(queryLabel); // Update the title to the query label
+      }
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
         setError("An unknown error occurred.");
       }
+    } finally {
+      setLoading(false); // Set loading to false when fetching is complete
     }
   };
 
@@ -136,11 +170,30 @@ function Charts() {
         className='helix-d-flex helix-flex-direction--column helix-gap-4 helix-pt-5 helix-px-6'
         style={{ height: "calc(100dvh - 68px)", overflow: "auto" }}
       >
-        <h1>Charts Page</h1>
+        <h1>{currentQueryLabel}</h1> {/* Dynamically update the title */}
+        {showGrid && (
+          <div>
+            <button
+              className='helix-btn helix-btn--primary helix-mb-4'
+              onClick={() => {
+                setShowGrid(false);
+                setCurrentQueryLabel("Queries Page"); // Reset the title when going back
+              }}
+            >
+              <HelixIcon icon={arrow_left} className='helix-mr-2' />
+              Back to Queries
+            </button>
+          </div>
+        )}
         {!authStatus && !authInProgress && (
           <div>
             <p>You need to authenticate to access queries.</p>
-            <button onClick={startAuth}>Start Authentication</button>
+            <button
+              onClick={startAuth}
+              className='helix-btn helix-btn--primary'
+            >
+              Start Authentication
+            </button>
           </div>
         )}
         {authInProgress && (
@@ -160,34 +213,48 @@ function Charts() {
         )}
         {authStatus && (
           <div>
-            <div className='helix-d-flex helix-flex-direction--column helix-gap-3'>
-              {queries ? (
-                Object.entries(queries).map(([key, query]) => {
-                  const typedQuery = query as {
-                    name: string;
-                    description?: string;
-                  };
-                  return (
-                    <div
-                      key={key}
-                      onClick={() => fetchQueryDetails(key)}
-                      className='helix-card'
-                    >
-                      <div className='helix-card__body'>
-                        <h3>{typedQuery.name}</h3>
-                        <p>{typedQuery.description}</p>
+            {!showGrid && !loading && (
+              <div className='helix-d-flex helix-flex-direction--column helix-gap-3'>
+                {queries ? (
+                  Object.entries(queries).map(([key, query]) => {
+                    const typedQuery = query as {
+                      name: string;
+                      description?: string;
+                    };
+                    return (
+                      <div key={key} className='helix-card'>
+                        <div className='helix-card__body helix-d-flex helix-justify--between helix-align--center helix-gap-2 '>
+                          <div>
+                            <h3 className='helix-mb-2'>{typedQuery.name}</h3>
+                            <p>{typedQuery.description}</p>
+                          </div>
+                          <button
+                            className='helix-btn helix-btn--secondary'
+                            onClick={() =>
+                              fetchQueryDetails(key, typedQuery.name)
+                            }
+                          >
+                            Load Query
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <p>No queries available. Please try again later.</p>
-              )}
-            </div>
-            {queryDetails && (
+                    );
+                  })
+                ) : (
+                  <p>No queries available. Please try again later.</p>
+                )}
+              </div>
+            )}
+            {loading && <div>Loading...</div>} {/* Show loading state */}
+            {showGrid && gridData && !loading && (
               <div>
-                <h2>Query Details</h2>
-                <pre>{JSON.stringify(queryDetails, null, 2)}</pre>
+                <div style={{ height: "500px", width: "100%" }}>
+                  <AGGridHelix
+                    height='500px'
+                    columnDefs={gridData.columnDefs}
+                    rowData={gridData.rowData}
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -198,4 +265,4 @@ function Charts() {
   );
 }
 
-export default Charts;
+export default Queries;

@@ -63,9 +63,9 @@ const menuItems = [
         url: "/",
       },
       {
-        id: "charts",
-        text: "Charts",
-        url: "/charts",
+        id: "queries",
+        text: "Queries",
+        url: "/queries",
       },
     ],
   },

@@ -6,7 +6,7 @@ import { HelixThemeProvider } from "@helix/theming";
 import "@helix/styles/dist/helix.css";
 import { AIProvider } from "@context";
 import { AGGridProvider } from "@helix/ag-grid";
-import Charts from "./pages/Charts.tsx";
+import Queries from "./pages/Queries.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <HelixThemeProvider>
@@ -15,7 +15,7 @@ createRoot(document.getElementById("root")!).render(
           <BrowserRouter>
             <Routes>
               <Route path='/' element={<App />} />
-              <Route path='/charts' element={<Charts />} />
+              <Route path='/queries' element={<Queries />} />
             </Routes>
           </BrowserRouter>
         </AIProvider>
