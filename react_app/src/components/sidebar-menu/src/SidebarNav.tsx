@@ -11,7 +11,6 @@ import {
   plus,
   robot,
   chevron_small_right,
-  wolfie,
 } from "@helix/helix-icon/outlined";
 import { Tooltip } from "@helix/tooltip";
 
